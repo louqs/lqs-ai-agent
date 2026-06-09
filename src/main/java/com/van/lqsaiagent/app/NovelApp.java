@@ -1,5 +1,7 @@
 package com.van.lqsaiagent.app;
 
+import com.van.lqsaiagent.advisor.MyLoggerAdvisor;
+import com.van.lqsaiagent.advisor.ReReadingAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -8,7 +10,6 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -157,7 +158,15 @@ public class NovelApp {
 
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor.builder(chatMemory).build(),
+
+                        // 自定义推理增强Advisor，可按需开启。由于我的场景是中文小说创意生成，对“发散性”要求高于“精确推理”，Re2 的收益可能不明显，反而限制了创作的跳跃感。
+                        // new ReReadingAdvisor(),
+
+                        // 自定义日志advisor，可按需开启
+                        new MyLoggerAdvisor()
+                )
                 .build();
 
     }

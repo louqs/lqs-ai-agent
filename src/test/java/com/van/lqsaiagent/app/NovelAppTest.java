@@ -24,11 +24,11 @@ class NovelAppTest {
         String userMessage = "你好，我是作者小白";
         String answer = novelApp.doChat(userMessage, userChatId);
         //第二轮
-        userMessage = "你好，请结合金庸、古龙、黄易进行创作一篇武侠小说，先生成第一章的内容";
+        userMessage = "你好，请结合金庸、古龙、黄易进行创作一篇武侠小说，先写大纲";
         answer = novelApp.doChat(userMessage, userChatId);
         Assertions.assertNotNull(answer);
         //第三轮
-        userMessage = "你好，请接着写第二章的内容";
+        userMessage = "生成第一章的内容";
         answer = novelApp.doChat(userMessage, userChatId);
         Assertions.assertNotNull(answer);
     }
