@@ -1,5 +1,7 @@
 package com.van.lqsaiagent.app;
 
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.van.lqsaiagent.advisor.MyLoggerAdvisor;
 import com.van.lqsaiagent.advisor.ReReadingAdvisor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,8 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @Slf4j
@@ -143,9 +147,11 @@ public class NovelApp {
                                     "5. 如果用户未指定平台，默认使用【晋江】风格，但需提醒确认。
             """;
 
+
     /**
      * 初始化ai客户端
-     * @param dashscopeChatModel  阿里云百炼   灵积模型
+     *
+     * @param dashscopeChatModel 阿里云百炼   灵积模型
      */
     public NovelApp(ChatModel dashscopeChatModel) {
         // 初始化基于内存的对话记忆
@@ -173,6 +179,7 @@ public class NovelApp {
 
     /**
      * AI 基础对话（支持多轮对话记忆）
+     *
      * @param userMessage 用户输入的消息
      * @param userChatId  用户对话的id
      * @return ai生成的内容
@@ -200,4 +207,80 @@ public class NovelApp {
         log.info("content: {}", content);
         return content;
     }
+
+    /**
+     * 大纲生成专用追加指令
+     */
+    private static final String OUTLINE_RULES = """
+            
+            【当前任务：生成大纲】
+            1. reportType 必须为 "OUTLINE"
+            2. content 中填写完整大纲（Markdown格式）
+            3. selfCheck 中检查：人物设定是否完整、CP阶段是否清晰、反派动机是否合理
+            4. fixedVersion 如有修正填写，否则与 content 相同
+            5. 大纲确认后，后续所有章节必须严格遵循此设定，禁止修改
+            """;
+
+    /**
+     * 正文生成专用追加指令
+     */
+    private static final String CHAPTER_RULES = """
+            
+            【当前任务：生成正文】
+            1. reportType 必须为 "CHAPTER"
+            2. content 中只填写本章正文（Markdown格式）
+            3. selfCheck 中必须检查：
+               - 与大纲设定是否矛盾（人设、关系、时间线）
+               - 与上一章衔接是否自然（人物位置、情绪、未解决冲突）
+               - 本章CP进度是否合理（禁止跳阶段）
+               - 反派行为是否符合动机链
+            4. 如果发现矛盾，在 inconsistencies 中列出，在 fixedVersion 中修正
+            5. 禁止出现大纲中未设定的人物、未交代的地点变化、未铺垫的关系进展
+            """;
+
+
+
+    /**
+     * 小说报告记录。
+     *
+     * @param reportType   报告类型：OUTLINE 或 CHAPTER。
+     * @param content      大纲或正文的完整内容（Markdown）。
+
+     */
+    public record NovelReport(
+            @JsonPropertyDescription("报告类型：OUTLINE 或 CHAPTER")
+            String reportType,
+
+            @JsonPropertyDescription("大纲或正文的完整内容（Markdown）")
+            String content
+
+    ) {
+
+    }
+
+
+
+    /**
+     * AI 小说报告功能（结构化输出）
+     *
+     * @param userMessage 用户输入的消息
+     * @param userChatId  用户对话的id
+     * @return ai生成的内容
+     */
+    public NovelReport doChatWithReport(String userMessage, String userChatId) {
+
+        NovelReport novelReport = chatClient
+                .prompt()
+                .system(SYSTEM_PROMPT )
+                .user(userMessage)
+                .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, userChatId))
+                .call()
+                .entity(NovelReport.class);
+
+        log.info("novelReport: {}", novelReport);
+
+        return novelReport;
+    }
+
+
 }
