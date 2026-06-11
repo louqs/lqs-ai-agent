@@ -4,6 +4,7 @@ package com.van.lqsaiagent.app;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.van.lqsaiagent.advisor.MyLoggerAdvisor;
 import com.van.lqsaiagent.advisor.ReReadingAdvisor;
+import com.van.lqsaiagent.chatmemory.FileBasedChatMemoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -155,7 +156,12 @@ public class NovelApp {
      */
     public NovelApp(ChatModel dashscopeChatModel) {
         // 初始化基于内存的对话记忆
-        ChatMemoryRepository chatMemoryRepository = new InMemoryChatMemoryRepository();
+        // ChatMemoryRepository chatMemoryRepository = new InMemoryChatMemoryRepository();
+        // 初始化基于文件的对话记忆
+        String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
+        ChatMemoryRepository chatMemoryRepository = new FileBasedChatMemoryRepository(fileDir);
+
+
         // 用仓库创建 ChatMemory（滑动窗口，最多保留30次对话）
         ChatMemory chatMemory = MessageWindowChatMemory.builder()
                 .chatMemoryRepository(chatMemoryRepository)
@@ -211,32 +217,37 @@ public class NovelApp {
     /**
      * 大纲生成专用追加指令
      */
-    private static final String OUTLINE_RULES = """
+    private static final String WRITING_RULES = """
             
-            【当前任务：生成大纲】
-            1. reportType 必须为 "OUTLINE"
-            2. content 中填写完整大纲（Markdown格式）
-            3. selfCheck 中检查：人物设定是否完整、CP阶段是否清晰、反派动机是否合理
-            4. fixedVersion 如有修正填写，否则与 content 相同
-            5. 大纲确认后，后续所有章节必须严格遵循此设定，禁止修改
-            """;
-
-    /**
-     * 正文生成专用追加指令
-     */
-    private static final String CHAPTER_RULES = """
-            
-            【当前任务：生成正文】
-            1. reportType 必须为 "CHAPTER"
-            2. content 中只填写本章正文（Markdown格式）
-            3. selfCheck 中必须检查：
-               - 与大纲设定是否矛盾（人设、关系、时间线）
-               - 与上一章衔接是否自然（人物位置、情绪、未解决冲突）
-               - 本章CP进度是否合理（禁止跳阶段）
-               - 反派行为是否符合动机链
-            4. 如果发现矛盾，在 inconsistencies 中列出，在 fixedVersion 中修正
-            5. 禁止出现大纲中未设定的人物、未交代的地点变化、未铺垫的关系进展
-            """;
+            【通用写作规范】
+        1. reportType 根据当前任务填写：
+           - 生成大纲时填 "OUTLINE"
+           - 生成正文时填 "CHAPTER"
+        
+        2. content 填写要求：
+           - OUTLINE：完整大纲（Markdown格式）
+           - CHAPTER：仅本章正文（Markdown格式）
+        
+        3. selfCheck 检查项：
+           - OUTLINE：人物设定是否完整、CP阶段是否清晰、反派动机是否合理
+           - CHAPTER：
+             • 与大纲设定是否矛盾（人设、关系、时间线）
+             • 与上一章衔接是否自然（人物位置、情绪、未解决冲突）
+             • 本章CP进度是否合理（禁止跳阶段）
+             • 反派行为是否符合动机链
+        
+        4. fixedVersion 规则：
+           - 如有修正则填写修正后的完整内容
+           - 无修正时与 content 相同
+        
+        5. 一致性约束：
+           - 大纲确认后，后续所有章节必须严格遵循此设定，禁止修改
+           - 正文中禁止出现大纲未设定的人物、未交代的地点变化、未铺垫的关系进展
+        
+        6. 发现矛盾时：
+           - 在 inconsistencies 中列出具体问题
+           - 在 fixedVersion 中给出修正版本
+        """;
 
 
 
@@ -271,7 +282,7 @@ public class NovelApp {
 
         NovelReport novelReport = chatClient
                 .prompt()
-                .system(SYSTEM_PROMPT )
+                .system(SYSTEM_PROMPT + WRITING_RULES)
                 .user(userMessage)
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, userChatId))
                 .call()

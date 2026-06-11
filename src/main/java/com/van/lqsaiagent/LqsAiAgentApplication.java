@@ -1,11 +1,8 @@
 package com.van.lqsaiagent;
 
 
-
-import com.van.lqsaiagent.demo.invoke.LangChainAiInvoke;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 
 
 //@EnableConfigurationProperties(ApiKeyConfig.class)

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>3.5.15</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.van</groupId>
@@ -28,6 +28,9 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <!-- 统一管理 Spring AI 版本，确保官方与阿里云版本兼容 -->
+        <spring-ai.version>1.1.4</spring-ai.version>
+        <spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
     </properties>
     <dependencies>
         <dependency>
@@ -60,41 +63,49 @@
             <version>4.4.0</version>
         </dependency>
 
-        <!--阿里云百炼，灵积大模型服务-->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>dashscope-sdk-java</artifactId>
-            <version>2.22.17</version>
-            <scope>compile</scope>
-        </dependency>
+        <!--        &lt;!&ndash;阿里云百炼，灵积大模型服务&ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.alibaba</groupId>-->
+        <!--            <artifactId>dashscope-sdk-java</artifactId>-->
+        <!--            <version>2.22.17</version>-->
+        <!--            <scope>compile</scope>-->
+        <!--        </dependency>-->
 
-        <!-- LangChain4j DashScope-->
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-community-dashscope</artifactId>
-            <version>1.15.0-beta25</version>
-        </dependency>
+        <!--        &lt;!&ndash; LangChain4j DashScope&ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>dev.langchain4j</groupId>-->
+        <!--            <artifactId>langchain4j-community-dashscope</artifactId>-->
+        <!--            <version>1.15.0-beta25</version>-->
+        <!--        </dependency>-->
 
         <!-- 支持结构化输出 -->
         <dependency>
             <groupId>com.github.victools</groupId>
             <artifactId>jsonschema-module-jackson</artifactId>
-            <version>4.31.1</version>
+            <version>4.38.0</version>
+        </dependency>
+
+        <!-- 支持文件会话记忆持久化的序列化 -->
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo</artifactId>
+            <version>5.6.2</version>
         </dependency>
 
         <!-- Spring AI Alibaba Agent Framework -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-agent-framework</artifactId>
-            <version>1.1.2.0</version>
+            <version>${spring-ai-alibaba.version}</version>
         </dependency>
 
         <!-- DashScope ChatModel 支持（如果使用其他模型，请跳转 Spring AI 文档选择对应的 starter） -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-            <version>1.1.2.0</version>
+            <version>${spring-ai-alibaba.version}</version>
         </dependency>
+
 
     </dependencies>
 
